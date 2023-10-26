@@ -1,0 +1,90 @@
+          - type: conditional
+            conditions:
+              - entity: sensor.dorchester
+                state_not: "0"
+            card:
+              type: custom:button-card
+              name: WEATHER ALERT
+              entity: sensor.dorchester
+              styles:
+                card:
+                  - background-color: "#d64242"
+                  - color: white
+                  - font-size: 18px
+                  - font-weight: bold
+                grid:
+                  - grid-template-areas: '"i n" "alerts alerts"'
+                  - grid-template-columns: 0.5fr 1fr
+                  - grid-template-rows: 1fr min-content min-content min-content min-content
+                img_cell:
+                  - justify-content: start
+                  - align-items: start
+                  - margin: none
+                icon:
+                  - width: 50%
+                name:
+                  - font-weight: bold
+                  - font-size: 32px
+                  - align-self: left
+                  - justify-self: start
+                  - padding-bottom: 4px
+              custom_fields:
+                alerts: |
+                  [[[
+                    const alerts = entity.attributes.alerts;
+                    let text = "<br/>";
+                    for (let i of alerts) {
+                      text += '-&nbsp;&nbsp;' +i.event + '<br/>';
+                    }
+                    return text;
+                  ]]]
+              tap_action:
+                action: fire-dom-event
+                browser_mod:
+                  service: browser_mod.popup
+                  data:
+                    title: Weather Alert
+                    card_mod:
+                      style: |
+                        #popup header
+                        .:
+                    content:
+                      type: custom:auto-entities
+                      card:
+                        type: custom:layout-card
+                        show_header_toggle: true
+                      filter:
+                        template: |
+                          {% set ns2 = namespace(cards=[]) %}
+                          {% for event in state_attr('sensor.dorchester','alerts') %}
+                          {% set ns2.cards = ns2.cards + [{
+                            "type": "markdown",
+                            "title": event.event,
+                            "content": event.description
+                            }] 
+                            %}
+                          {% endfor %}
+
+
+
+                          {%- set ns = namespace(results = [{
+                            "type": "custom:swipe-card",
+                            "parameters": {
+                              "pagination": {
+                                "type": "bullets"
+                              },
+                              "effect":"coverflow",
+                              "centeredSlides": "true",
+                              "slidesPerView": "auto",
+                              "coverflowEffect": {
+                                "rotate":"50",
+                                "stretch":"0",
+                                "depth":"100",
+                                "modifier":"1",
+                                "slideShadows":"true"
+                              }
+                            },
+                            "cards": ns2.cards
+                            }])
+                          -%}
+                          {{ns.results}}
